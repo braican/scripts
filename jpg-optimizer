@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# Set the default values for max width, max height, JPEG quality, and resize directory name
+max_width=800
+max_height=600
+jpeg_quality=20
+resize_dir="resized"
+
+# Function to display script usage
+display_usage() {
+  echo "Usage: $0 [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpeg-quality <jpeg_quality>] [-r|--resize-dir <resize_dir>] <target_directory>"
+  echo "Options:"
+  echo "  -w, --max-width <max_width>        Specify the maximum width for resizing (default: $max_width)"
+  echo "  -h, --max-height <max_height>      Specify the maximum height for resizing (default: $max_height)"
+  echo "  -q, --jpeg-quality <jpeg_quality>  Specify the JPEG quality (default: $jpeg_quality)"
+  echo "  -r, --resize-dir <resize_dir>      Specify the name of the resize directory (default: $resize_dir)"
+}
+
+# Parse command line options
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -w|--max-width)
+      max_width=$2
+      shift 2
+      ;;
+    -h|--max-height)
+      max_height=$2
+      shift 2
+      ;;
+    -q|--jpeg-quality)
+      jpeg_quality=$2
+      shift 2
+      ;;
+    -r|--resize-dir)
+      resize_dir=$2
+      shift 2
+      ;;
+    *)
+      break
+      ;;
+  esac
+done
+
+# Check if the target directory is provided
+if [[ -z "$1" ]]; then
+  echo "Error: Target directory is not provided."
+  display_usage
+  exit 1
+fi
+
+# Set the target directory path
+target_directory="$1"
+
+# Create the resize directory inside the target directory
+resized_directory="$target_directory/$resize_dir"
+mkdir -p "$resized_directory"
+
+# Iterate over each JPEG file in the directory
+for file in "$target_directory"/*.jpg; do
+  if [[ -f "$file" ]]; then
+    # Get the file name without extension
+    filename=$(basename -- "$file")
+    filename_without_extension="${filename%.*}"
+
+    # Set the output file path for resized image
+    output_file="$resized_directory/$filename"
+
+    # Get the original image dimensions
+    dimensions=$(identify -format "%wx%h" "$file")
+    original_width=$(echo "$dimensions" | cut -d 'x' -f1)
+    original_height=$(echo "$dimensions" | cut -d 'x' -f2)
+
+    # Calculate the new dimensions while maintaining the aspect ratio
+    if (( original_width > max_width || original_height > max_height )); then
+      # Calculate the scaling ratio for resizing
+      ratio_width=$(awk "BEGIN {print $max_width/$original_width}")
+      ratio_height=$(awk "BEGIN {print $max_height/$original_height}")
+      ratio=$(awk "BEGIN {print ($ratio_width<$ratio_height?$ratio_width:$ratio_height)}")
+
+      # Calculate the new dimensions
+      new_width=$(awk "BEGIN {print int($original_width * $ratio)}")
+      new_height=$(awk "BEGIN {print int($original_height * $ratio)}")
+
+      # Resize the image
+      convert "$file" -resize "${new_width}x${new_height}" "$output_file"
+
+      # Optimize the image using JPEG optimization tool (jpegoptim) with desired quality
+      jpegoptim -m"$jpeg_quality" "$output_file"
+    else
+      # No need to resize, just optimize the image
+      jpegoptim -m"$jpeg_quality" "$file"
+    fi
+  fi
+done
+
