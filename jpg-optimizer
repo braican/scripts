@@ -19,23 +19,50 @@ display_usage() {
 }
 
 # Parse command line options
-while getopts ":w:h:q:r:" option; do
-  case "${option}" in
-    w)
-      max_width=${OPTARG}
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -w|--max-width)
+      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
+        max_width=$2
+        shift 2
+      else
+        echo "Error: Missing or invalid value for max_width option."
+        display_usage
+        exit 1
+      fi
       ;;
-    h)
-      max_height=${OPTARG}
+    -h|--max-height)
+      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
+        max_height=$2
+        shift 2
+      else
+        echo "Error: Missing or invalid value for max_height option."
+        display_usage
+        exit 1
+      fi
       ;;
-    q)
-      jpeg_quality=${OPTARG}
+    -q|--jpeg-quality)
+      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
+        jpeg_quality=$2
+        shift 2
+      else
+        echo "Error: Missing or invalid value for jpeg_quality option."
+        display_usage
+        exit 1
+      fi
       ;;
-    r)
-      resize_dir=${OPTARG}
+    -r|--resize-dir)
+      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
+        resize_dir=$2
+        shift 2
+      else
+        echo "Error: Missing or invalid value for resize_dir option."
+        display_usage
+        exit 1
+      fi
       ;;
     *)
-      display_usage
-      exit 1
+      break
       ;;
   esac
 done
@@ -91,4 +118,3 @@ for file in "$target_directory"/*.jpg; do
     fi
   fi
 done
-
