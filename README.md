@@ -37,16 +37,16 @@ Allows you to resize and change quality of a directory of jpgs.
 **Usage:**
 
 ```bash
-jpg-optimizer <source_directory> [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpeg-quality <jpeg_quality>] [-r|--resize-dir <resize_dir>]
+jpg-optimizer <source_directory> [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpg-quality <jpg_quality>] [-r|--resize-dir <resize_dir>]
 ```
 
 **Options:**
 
 ```bash
--w, --max-width    <max_width>       Specify the maximum width for resizing (default: 800)
--h, --max-height   <max_height>      Specify the maximum height for resizing (default: 600)
--q, --jpeg-quality <jpeg_quality>    Specify the JPEG quality (default: 50)
--r, --resize-dir   <resize_dir>      Specify the name of the resize directory (default: resized)
+-w, --max-width    <max_width>    Specify the maximum width for resizing (default: 800)
+-h, --max-height   <max_height>   Specify the maximum height for resizing (default: 600)
+-q, --jpg-quality  <jpg_quality>  Specify the JPEG quality (default: 50)
+-r, --resize-dir   <resize_dir>   Specify the name of the resize directory (default: resized)
 ```
 
 ### `convert-heic-to-jpg`

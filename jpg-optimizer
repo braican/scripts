@@ -3,19 +3,19 @@
 # Set the default values for max width, max height, JPEG quality, and resize directory name
 max_width=800
 max_height=600
-jpeg_quality=50
+jpg_quality=50
 resize_dir="resized"
 
 # Function to display script usage
 display_usage() {
   echo "Usage:"
-  echo "  jpg-optimizer [-w <max_width>] [-h <max_height>] [-q <jpeg_quality>] [-r <resize_dir>] <source_directory>"
+  echo "  jpg-optimizer <source_directory> [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpg-quality <jpg_quality>] [-r|--resize-dir <resize_dir>]"
   echo ""
   echo "Options:"
-  echo "  -w, --max-width <max_width>        Specify the maximum width for resizing (default: $max_width)"
-  echo "  -h, --max-height <max_height>      Specify the maximum height for resizing (default: $max_height)"
-  echo "  -q, --jpeg-quality <jpeg_quality>  Specify the JPEG quality (default: $jpeg_quality)"
-  echo "  -r, --resize-dir <resize_dir>      Specify the name of the resize directory (default: $resize_dir)"
+  echo "  -w, --max-width    <max_width>    Specify the maximum width for resizing (default: $max_width)"
+  echo "  -h, --max-height   <max_height>   Specify the maximum height for resizing (default: $max_height)"
+  echo "  -q, --jpg-quality  <jpg_quality>  Specify the JPEG quality (default: $jpg_quality)"
+  echo "  -r, --resize-dir   <resize_dir>   Specify the name of the resize directory (default: $resize_dir)"
 }
 
 # Parse command line options
@@ -29,8 +29,8 @@ while [[ "$#" -gt 0 ]]; do
       max_height=$2
       shift 2
       ;;
-    -q|--jpeg-quality)
-      jpeg_quality=$2
+    -q|--jpg-quality)
+      jpg_quality=$2
       shift 2
       ;;
     -r|--resize-dir)
@@ -91,10 +91,10 @@ for file in "$target_directory"/*.jpg; do
       convert "$file" -resize "${new_width}x${new_height}" "$output_file"
 
       # Optimize the image using JPEG optimization tool (jpegoptim) with desired quality
-      jpegoptim -m"$jpeg_quality" "$output_file"
+      jpegoptim -m"$jpg_quality" "$output_file"
     else
       # No need to resize, just optimize the image
-      jpegoptim -m"$jpeg_quality" "$file"
+      jpegoptim -m"$jpg_quality" "$file"
     fi
   fi
 done
