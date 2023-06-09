@@ -3,12 +3,14 @@
 # Set the default values for max width, max height, JPEG quality, and resize directory name
 max_width=800
 max_height=600
-jpeg_quality=20
+jpeg_quality=50
 resize_dir="resized"
 
 # Function to display script usage
 display_usage() {
-  echo "Usage: $0 [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpeg-quality <jpeg_quality>] [-r|--resize-dir <resize_dir>] <target_directory>"
+  echo "Usage:"
+  echo "  jpg-optimizer [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpeg-quality <jpeg_quality>] [-r|--resize-dir <resize_dir>] <source_directory>"
+  echo ""
   echo "Options:"
   echo "  -w, --max-width <max_width>        Specify the maximum width for resizing (default: $max_width)"
   echo "  -h, --max-height <max_height>      Specify the maximum height for resizing (default: $max_height)"
@@ -17,26 +19,23 @@ display_usage() {
 }
 
 # Parse command line options
-while [[ "$#" -gt 0 ]]; do
-  case "$1" in
-    -w|--max-width)
-      max_width=$2
-      shift 2
+while getopts ":w:h:q:r:" option; do
+  case "${option}" in
+    w)
+      max_width=${OPTARG}
       ;;
-    -h|--max-height)
-      max_height=$2
-      shift 2
+    h)
+      max_height=${OPTARG}
       ;;
-    -q|--jpeg-quality)
-      jpeg_quality=$2
-      shift 2
+    q)
+      jpeg_quality=${OPTARG}
       ;;
-    -r|--resize-dir)
-      resize_dir=$2
-      shift 2
+    r)
+      resize_dir=${OPTARG}
       ;;
     *)
-      break
+      display_usage
+      exit 1
       ;;
   esac
 done
