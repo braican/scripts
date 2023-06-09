@@ -72,7 +72,7 @@ for file in "$target_directory"/*.jpg; do
     output_file="$resized_directory/$filename"
 
     # Get the original image dimensions
-    dimensions=$(identify -format "%wx%h" "$file")
+    dimensions=$(gm identify -format "%wx%h" "$file")
     original_width=$(echo "$dimensions" | cut -d 'x' -f1)
     original_height=$(echo "$dimensions" | cut -d 'x' -f2)
 
@@ -88,7 +88,7 @@ for file in "$target_directory"/*.jpg; do
       new_height=$(awk "BEGIN {print int($original_height * $ratio)}")
 
       # Resize the image
-      convert "$file" -resize "${new_width}x${new_height}" "$output_file"
+      gm convert "$file" -resize "${new_width}x${new_height}" "$output_file"
 
       # Optimize the image using JPEG optimization tool (jpegoptim) with desired quality
       jpegoptim -m"$jpg_quality" "$output_file"

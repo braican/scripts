@@ -6,9 +6,9 @@ This is a collection of useful bash scripts.
 
 You'll need an environment that can run bash scripts. In addition, you'll need a few packages:
 
-- **imagemagick** for image transformation.
+- **graphicsmagick** for image transformation (I've found gm to work better than imagemagick in resizing images).
 
-  `brew install imagemagick`
+  `brew install graphicsmagick`
 
 - **jpegoptim** for optimizing jpgs.
 
