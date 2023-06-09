@@ -9,7 +9,7 @@ resize_dir="resized"
 # Function to display script usage
 display_usage() {
   echo "Usage:"
-  echo "  jpg-optimizer [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpeg-quality <jpeg_quality>] [-r|--resize-dir <resize_dir>] <source_directory>"
+  echo "  jpg-optimizer [-w <max_width>] [-h <max_height>] [-q <jpeg_quality>] [-r <resize_dir>] <source_directory>"
   echo ""
   echo "Options:"
   echo "  -w, --max-width <max_width>        Specify the maximum width for resizing (default: $max_width)"
@@ -19,63 +19,43 @@ display_usage() {
 }
 
 # Parse command line options
-while [[ $# -gt 0 ]]; do
-  case "$1" in
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
     -w|--max-width)
-      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
-        max_width=$2
-        shift 2
-      else
-        echo "Error: Missing or invalid value for max_width option."
-        display_usage
-        exit 1
-      fi
+      max_width=$2
+      shift 2
       ;;
     -h|--max-height)
-      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
-        max_height=$2
-        shift 2
-      else
-        echo "Error: Missing or invalid value for max_height option."
-        display_usage
-        exit 1
-      fi
+      max_height=$2
+      shift 2
       ;;
     -q|--jpeg-quality)
-      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
-        jpeg_quality=$2
-        shift 2
-      else
-        echo "Error: Missing or invalid value for jpeg_quality option."
-        display_usage
-        exit 1
-      fi
+      jpeg_quality=$2
+      shift 2
       ;;
     -r|--resize-dir)
-      if [[ -n "$2" ]] && [[ "$2" != -* ]]; then
-        resize_dir=$2
-        shift 2
+      resize_dir=$2
+      shift 2
+      ;;
+    *)
+      if [[ -z "$target_directory" ]]; then
+        target_directory=$1
       else
-        echo "Error: Missing or invalid value for resize_dir option."
+        echo "Error: Invalid argument '$1'"
         display_usage
         exit 1
       fi
-      ;;
-    *)
-      break
+      shift
       ;;
   esac
 done
 
 # Check if the target directory is provided
-if [[ -z "$1" ]]; then
+if [[ -z "$target_directory" ]]; then
   echo "Error: Target directory is not provided."
   display_usage
   exit 1
 fi
-
-# Set the target directory path
-target_directory="$1"
 
 # Create the resize directory inside the target directory
 resized_directory="$target_directory/$resize_dir"
