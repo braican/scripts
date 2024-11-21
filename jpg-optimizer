@@ -62,7 +62,8 @@ resized_directory="$target_directory/$resize_dir"
 mkdir -p "$resized_directory"
 
 # Iterate over each JPEG file in the directory
-for file in "$target_directory"/*.jpg; do
+# Iterate over each JPEG file in the directory
+for file in "$target_directory"/*; do
   if [[ -f "$file" ]]; then
     # Get the file name without extension
     filename=$(basename -- "$file")
@@ -70,6 +71,9 @@ for file in "$target_directory"/*.jpg; do
 
     # Set the output file path for resized image
     output_file="$resized_directory/$filename"
+
+    # Correct the orientation of the image
+    gm convert "$file" -auto-orient "$file"  # Ensure correct orientation
 
     # Get the original image dimensions
     dimensions=$(gm identify -format "%wx%h" "$file")
@@ -89,12 +93,19 @@ for file in "$target_directory"/*.jpg; do
 
       # Resize the image
       gm convert "$file" -resize "${new_width}x${new_height}" "$output_file"
-
-      # Optimize the image using JPEG optimization tool (jpegoptim) with desired quality
-      jpegoptim -s -m"$jpg_quality" "$output_file"
     else
-      # No need to resize, just optimize the image
-      jpegoptim -s -m"$jpg_quality" "$file"
+      # No need to resize, just use the original file as output
+      output_file="$file"
     fi
+
+    # Optimize the image based on its type
+    case "${file##*.}" in
+      jpg|jpeg)
+        jpegoptim -s -m"$jpg_quality" "$output_file"
+        ;;
+      png)
+        optipng -o7 "$output_file"  # Use optipng for PNG optimization
+        ;;
+    esac
   fi
 done

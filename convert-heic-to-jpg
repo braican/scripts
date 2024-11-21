@@ -15,7 +15,7 @@ target_directory="$source_directory/jpgs"
 mkdir -p "$target_directory"
 
 # Convert HEIC files to JPG in the source directory and save them in the "jpgs" subdirectory
-for file in "$source_directory"/*.heic; do
+for file in "$source_directory"/*.{heic,HEIC}; do
   if [ -f "$file" ]; then
     # Get the file name without extension
     filename=$(basename -- "$file")
