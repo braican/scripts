@@ -1,111 +1,106 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Set the default values for max width, max height, JPEG quality, and resize directory name
-max_width=800
-max_height=600
-jpg_quality=50
-resize_dir="resized"
+# Defaults
+MAX_WIDTH=""
+MAX_HEIGHT=""
+QUALITY="85"
+DIR=""
 
-# Function to display script usage
-display_usage() {
-  echo "Usage:"
-  echo "  jpg-optimizer <source_directory> [-w|--max-width <max_width>] [-h|--max-height <max_height>] [-q|--jpg-quality <jpg_quality>] [-r|--resize-dir <resize_dir>]"
-  echo ""
-  echo "Options:"
-  echo "  -w, --max-width    <max_width>    Specify the maximum width for resizing (default: $max_width)"
-  echo "  -h, --max-height   <max_height>   Specify the maximum height for resizing (default: $max_height)"
-  echo "  -q, --jpg-quality  <jpg_quality>  Specify the JPEG quality (default: $jpg_quality)"
-  echo "  -r, --resize-dir   <resize_dir>   Specify the name of the resize directory (default: $resize_dir)"
+print_usage() {
+  echo "Usage: jpg-optimizer <directory> [--max-width=N] [--max-height=N] [--quality=N]"
+  exit 1
 }
 
-# Parse command line options
-while [[ "$#" -gt 0 ]]; do
-  case $1 in
-    -w|--max-width)
-      max_width=$2
-      shift 2
+# --- Parse args -------------------------------------------------------
+
+for arg in "$@"; do
+  case "$arg" in
+    --max-width=* )
+      MAX_WIDTH="${arg#*=}"
       ;;
-    -h|--max-height)
-      max_height=$2
-      shift 2
+    --max-width )
+      MAX_WIDTH="$2"; shift ;;
+    --max-height=* )
+      MAX_HEIGHT="${arg#*=}"
       ;;
-    -q|--jpg-quality)
-      jpg_quality=$2
-      shift 2
+    --max-height )
+      MAX_HEIGHT="$2"; shift ;;
+    --quality=* )
+      QUALITY="${arg#*=}"
       ;;
-    -r|--resize-dir)
-      resize_dir=$2
-      shift 2
+    --quality )
+      QUALITY="$2"; shift ;;
+    -* )
+      echo "Unknown option: $arg"
+      print_usage
       ;;
-    *)
-      if [[ -z "$target_directory" ]]; then
-        target_directory=$1
-      else
-        echo "Error: Invalid argument '$1'"
-        display_usage
-        exit 1
-      fi
-      shift
+    * )
+      # directory
+      DIR="$arg"
       ;;
   esac
 done
 
-# Check if the target directory is provided
-if [[ -z "$target_directory" ]]; then
-  echo "Error: Target directory is not provided."
-  display_usage
+# Require directory
+if [[ -z "$DIR" ]]; then
+  print_usage
+fi
+
+if [[ ! -d "$DIR" ]]; then
+  echo "Directory not found: $DIR"
   exit 1
 fi
 
-# Create the resize directory inside the target directory
-resized_directory="$target_directory/$resize_dir"
-mkdir -p "$resized_directory"
+# resolve absolute path
+if command -v realpath >/dev/null 2>&1; then
+  DIR=$(realpath "$DIR")
+fi
 
-# Iterate over each JPEG file in the directory
-# Iterate over each JPEG file in the directory
-for file in "$target_directory"/*; do
-  if [[ -f "$file" ]]; then
-    # Get the file name without extension
-    filename=$(basename -- "$file")
-    filename_without_extension="${filename%.*}"
+OUTDIR="$DIR/opt"
+mkdir -p "$OUTDIR"
 
-    # Set the output file path for resized image
-    output_file="$resized_directory/$filename"
+# --- Determine resize string -----------------------------------------
 
-    # Correct the orientation of the image
-    gm convert "$file" -auto-orient "$file"  # Ensure correct orientation
+RESIZE=""
+if [[ -n "$MAX_WIDTH" || -n "$MAX_HEIGHT" ]]; then
+  W="${MAX_WIDTH:-}"
+  H="${MAX_HEIGHT:-}"
 
-    # Get the original image dimensions
-    dimensions=$(gm identify -format "%wx%h" "$file")
-    original_width=$(echo "$dimensions" | cut -d 'x' -f1)
-    original_height=$(echo "$dimensions" | cut -d 'x' -f2)
+  # build ImageMagick geometry (e.g. "1200x900>")
+  RESIZE="${W}x${H}>"
+fi
 
-    # Calculate the new dimensions while maintaining the aspect ratio
-    if (( original_width > max_width || original_height > max_height )); then
-      # Calculate the scaling ratio for resizing
-      ratio_width=$(awk "BEGIN {print $max_width/$original_width}")
-      ratio_height=$(awk "BEGIN {print $max_height/$original_height}")
-      ratio=$(awk "BEGIN {print ($ratio_width<$ratio_height?$ratio_width:$ratio_height)}")
+echo "Input directory: $DIR"
+echo "Output directory: $OUTDIR"
+echo "Resize: ${RESIZE:-none}"
+echo "Quality: $QUALITY"
+echo ""
 
-      # Calculate the new dimensions
-      new_width=$(awk "BEGIN {print int($original_width * $ratio)}")
-      new_height=$(awk "BEGIN {print int($original_height * $ratio)}")
+# --- Process PNG and JPG files --------------------------------------
 
-      # Resize the image
-      gm convert "$file" -resize "${new_width}x${new_height}" "$output_file"
-    else
-      # No need to resize, just use the original file as output
-      output_file="$file"
-    fi
+shopt -s nullglob nocaseglob
+FILES=("$DIR"/*.png "$DIR"/*.jpg "$DIR"/*.jpeg)
 
-    # Optimize the image based on its type
-    case "${file##*.}" in
-      jpg|jpeg)
-        jpegoptim -s -m"$jpg_quality" "$output_file"
-        ;;
-      png)
-        optipng -o7 "$output_file"  # Use optipng for PNG optimization
-        ;;
-    esac
+if [[ ${#FILES[@]} -eq 0 ]]; then
+  echo "No PNG/JPG files found."
+  exit 0
+fi
+
+for file in "${FILES[@]}"; do
+  base=$(basename "$file")
+  name="${base%.*}"
+
+  outfile="$OUTDIR/${name}.jpg"
+
+  echo "Converting: $base → ${name}.jpg"
+
+  if [[ -n "$RESIZE" ]]; then
+    magick "$file" -auto-orient -resize "$RESIZE" -quality "$QUALITY" -interlace JPEG "$outfile"
+  else
+    magick "$file" -auto-orient -quality "$QUALITY" -interlace JPEG "$outfile"
   fi
 done
+
+echo ""
+echo "Done! Optimized images saved to:"
+echo "  $OUTDIR/"
